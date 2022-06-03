@@ -13,7 +13,6 @@ interface TerraswapNetwork {
     amount: string
     gas: string
   }
-  stats: string
 }
 
 export const AVAILABLE_CHAIN_ID_LIST = ["phoenix-1", "pisco-1"]
@@ -25,8 +24,7 @@ const terraswapNetworks: Record<string, TerraswapNetwork> = {
       process.env.REACT_APP_MAINNET_SERVICE_URL || "https://api.terraswap.io/",
     dashboard: process.env.REACT_APP_MAINNET_DASHBOARD_URL,
     router: "terra13ehuhysn5mqjeaheeuew2gjs785f6k7jm8vfsqg3jhtpkwppcmzqcu7chk",
-    fee: { gasPrice: "0.15", amount: "1518", gas: "2000000" },
-    stats: "https://phoenix-fcd.terra.dev/",
+    fee: { gasPrice: "0.15", amount: "1518", gas: "500000" },
   },
   testnet: {
     factory: "terra1jha5avc92uerwp9qzx3flvwnyxs3zax2rrm6jkcedy2qvzwd2k7qk7yxcl",
@@ -35,8 +33,7 @@ const terraswapNetworks: Record<string, TerraswapNetwork> = {
       "https://api-pisco.terraswap.io/",
     dashboard: process.env.REACT_APP_TESTNET_DASHBOARD_URL,
     router: "terra1xp6xe6uwqrspumrkazdg90876ns4h78yw03vfxghhcy03yexcrcsdaqvc8",
-    fee: { gasPrice: "0.15", amount: "1518", gas: "2000000" },
-    stats: "https://pisco-fcd.terra.dev/",
+    fee: { gasPrice: "0.15", amount: "1518", gas: "500000" },
   },
 }
 

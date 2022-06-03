@@ -801,6 +801,7 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
         )
 
         txOptions.fee = signMsg.auth_info.fee
+        setValue(Key.feeValue, txOptions.fee.amount.get(feeAddress)?.amount.toString() || "")
 
         const extensionResult = await terraExtensionPost(txOptions)
 
