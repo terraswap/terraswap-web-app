@@ -11,7 +11,6 @@ const useNetwork = () => {
     ...network,
     ...terraswapNetworks[network.name],
     getFinderUrl,
-    fcd: network.lcd?.replace("lcd", "fcd"),
   }
 }
 
