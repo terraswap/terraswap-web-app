@@ -1,39 +1,64 @@
 import { FC, useEffect, useMemo, useRef, useState } from "react"
 import classNames from "classnames/bind"
-import { useCombineKeys } from "../hooks"
-import { Config } from "./useSelectAsset"
 import SwapToken from "./SwapToken"
 import styles from "./SwapTokens.module.scss"
-import { lpTokenInfos } from "../rest/usePairs"
+import usePairs, { lpTokenInfos } from "../rest/usePairs"
 import { Type } from "../pages/Swap"
 import { tokenInfos } from "../rest/usePairs"
 import Loading from "components/Loading"
 import { SwapTokenAsset } from "./useSwapSelectToken"
 import { VariableSizeList, ListChildComponentProps } from "react-window"
-import { useContractsAddress } from "hooks/useContractsAddress"
+import { isNativeToken } from "libs/utils"
+import styled from "styled-components"
 
 const cx = classNames.bind(styles)
 
-interface Props extends Config {
+interface Props {
   isFrom: boolean
   selected?: string
   onSelect: (asset: string, isUnable?: boolean) => void
   type: string
   assetList?: SwapTokenAsset[]
+  value: string
+  formatTokenName?: (symbol: string) => string
 }
+
+const NoPairs = styled.div`
+  width: 100%;
+  height: 100%;
+  position: relative;
+  font-size: 16px;
+  font-weight: bold;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: normal;
+  letter-spacing: normal;
+  text-align: center;
+  color: #0222ba;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+
+  & > * {
+    margin-bottom: 20px;
+  }
+
+  & > h1 {
+    font-size: 46px;
+    font-weight: bold;
+  }
+`
 
 const SwapTokens = ({
   selected,
   onSelect: handleSelect,
   type,
   assetList,
-  priceKey,
-  balanceKey,
   formatTokenName,
 }: Props) => {
   const listRef = useRef<HTMLUListElement>(null)
-  const { loading } = useCombineKeys([priceKey, balanceKey])
-  const { isNativeToken } = useContractsAddress()
+  const { isLoading: isPairsLoading } = usePairs()
 
   /* search */
   const [searchKeyword, setSearchKeyword] = useState("")
@@ -121,20 +146,33 @@ const SwapTokens = ({
         />
       </section>
 
-      <ul ref={listRef} className={classNames(styles.list, { loading })}>
-        {assetElements ? (
-          <VariableSizeList
-            height={listHeight}
-            width="100%"
-            itemSize={(index) =>
-              isNativeToken(filteredAssetList?.[index].contract_addr || "")
-                ? 75
-                : 75
-            }
-            itemCount={assetElements.length}
-          >
-            {Row}
-          </VariableSizeList>
+      <ul ref={listRef} className={classNames(styles.list)}>
+        {assetElements && !isPairsLoading ? (
+          <>
+            {assetElements?.length ? (
+              <VariableSizeList
+                height={listHeight}
+                width="100%"
+                itemSize={(index) =>
+                  isNativeToken(filteredAssetList?.[index].contract_addr || "")
+                    ? 75
+                    : 75
+                }
+                itemCount={assetElements.length}
+              >
+                {Row}
+              </VariableSizeList>
+            ) : (
+              <NoPairs>
+                <h1>:(</h1>
+                <div>
+                  No available pairs yet.
+                  <br />
+                  We are looking forward to getting the first providing!
+                </div>
+              </NoPairs>
+            )}
+          </>
         ) : (
           <div
             style={{
@@ -144,7 +182,7 @@ const SwapTokens = ({
               left: 0,
             }}
           >
-            <Loading />
+            <Loading color="#0222ba" />
           </div>
         )}
       </ul>

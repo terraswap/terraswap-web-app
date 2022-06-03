@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react"
 import routes from "routes"
-import { ContractProvider, useContractState } from "hooks/useContract"
 import { ThemeProvider } from "styled-components"
 import variables from "styles/_export.module.scss"
-import { useAddress } from "hooks"
 import Header from "./Header"
 import Footer from "./Footer"
 import container from "components/Container"
@@ -42,10 +40,7 @@ const Container = styled(container)`
 `
 
 const App = () => {
-  const address = useAddress()
-  const contract = useContractState(address)
   const { isLoading: isPairsLoading } = usePairs()
-
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -59,20 +54,18 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={variables}>
-        <ContractProvider value={contract}>
-          <Header />
-          {!isLoading && (
-            <div>
-              <Container>
-                <Wrapper>
-                  <div style={{ flex: 1, maxWidth: 150 }}>&nbsp;</div>
-                  <div style={{ flex: 1 }}>{routes()}</div>
-                </Wrapper>
-              </Container>
-            </div>
-          )}
-          <Footer />
-        </ContractProvider>
+        <Header />
+        {!isLoading && (
+          <div>
+            <Container>
+              <Wrapper>
+                <div style={{ flex: 1, maxWidth: 150 }}>&nbsp;</div>
+                <div style={{ flex: 1 }}>{routes()}</div>
+              </Wrapper>
+            </Container>
+          </div>
+        )}
+        <Footer />
       </ThemeProvider>
     </QueryClientProvider>
   )

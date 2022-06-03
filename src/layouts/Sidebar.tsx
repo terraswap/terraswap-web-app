@@ -1,12 +1,12 @@
-import React from "react"
+import { Fragment } from "react"
+
 import styled, { css } from "styled-components"
 import { NavLink as navLink, useLocation } from "react-router-dom"
 import { useModal } from "components/Modal"
 
-import iconMenu from "images/icon-menu.svg"
-import iconClose from "images/icon-close-primary.svg"
 import { socialMediaList } from "constants/constants"
 import SocialMediaAnchor from "components/SocialMediaAnchor"
+import ChangeVersionButton from "components/ChangeVersionButton"
 
 const Wrapper = styled.div<{ isOpen: boolean }>`
   width: 100%;
@@ -96,23 +96,6 @@ const NavLink = styled(navLink)`
   }
 `
 
-const MobileButton = styled.button<{ isOpen?: boolean }>`
-  display: none;
-  width: 32px;
-  height: 32px;
-  position: fixed;
-  z-index: 5550;
-  top: 16px;
-  right: 16px;
-  background-image: url("${({ isOpen }) => (isOpen ? iconClose : iconMenu)}");
-  background-size: contain;
-  background-position: 50% 50%;
-  background-repeat: no-repeat;
-  @media screen and (max-width: ${({ theme }) => theme.breakpoint}) {
-    display: block;
-  }
-`
-
 const SocialMediaList = styled.div<{ isOpen?: boolean }>`
   width: 100%;
   height: auto;
@@ -158,32 +141,34 @@ const SocialMediaList = styled.div<{ isOpen?: boolean }>`
 `
 
 const Sidebar = () => {
-  const { isOpen, open, close } = useModal()
+  const { isOpen, close } = useModal()
   const location = useLocation()
 
   return (
     <>
-      <MobileButton
-        isOpen={isOpen}
-        onClick={() => (!isOpen ? open() : close())}
-      />
       <Wrapper isOpen={isOpen}>
         <div>
           <NavLink
             to="/"
             className={location.pathname?.includes("/pairs") ? "active" : ""}
-            onClick={() => close()}
+            onClick={(event) => {
+              event.preventDefault()
+              close()
+            }}
+            style={{ cursor: "not-allowed" }}
           >
             Dashboard
           </NavLink>
           <NavLink to="/swap" onClick={() => close()}>
             Swap
           </NavLink>
+          <div style={{ height: 25 }}></div>
+          <ChangeVersionButton />
         </div>
       </Wrapper>
       <SocialMediaList isOpen={isOpen}>
         {socialMediaList.map((item, index) => (
-          <React.Fragment key={item.href}>
+          <Fragment key={item.href}>
             <SocialMediaAnchor
               className="desktop-only"
               href={item.href}
@@ -202,7 +187,7 @@ const Sidebar = () => {
               style={{ transitionDelay: `${index * 0.06 + 0.125}s` }}
               iconSrc={item.iconLight}
             />
-          </React.Fragment>
+          </Fragment>
         ))}
       </SocialMediaList>
     </>

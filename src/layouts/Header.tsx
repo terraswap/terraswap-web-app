@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { ReactComponent as Logo } from "../images/TerraswapLogo.svg"
 import Container from "../components/Container"
 import Connect from "./Connect"
@@ -61,7 +61,7 @@ const Header = () => {
         <Container className={styles.container}>
           <section className={styles.wrapper}>
             <Link to="/">
-              <Logo height={38} className={styles.logo} />
+              <Logo height={31.2} className={styles.logo} />
             </Link>
           </section>
 

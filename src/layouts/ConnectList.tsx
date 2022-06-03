@@ -1,5 +1,5 @@
 import { ConnectType, useWallet } from "@terra-money/wallet-provider"
-import React from "react"
+
 import { ReactNode } from "react"
 import styles from "./ConnectList.module.scss"
 import { useConnectModal } from "hooks"
@@ -28,6 +28,11 @@ const ConnectList = () => {
   const connectModal = useConnectModal()
   const supportModal = useModal()
 
+  const handleConnectClick = (type: ConnectType, identifier?: string) => {
+    connect(type, identifier)
+    connectModal.close()
+  }
+
   const buttons: Button[] = [
     ...availableConnections
       .filter(({ type }) => type !== ConnectType.READONLY)
@@ -36,8 +41,7 @@ const ConnectList = () => {
         image: <img src={icon} {...size} alt={name} />,
         isInstalled: true,
         onClick: () => {
-          connect(type, identifier)
-          connectModal.close()
+          handleConnectClick(type, identifier)
         },
       })),
     ...availableInstallations

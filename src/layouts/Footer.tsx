@@ -1,9 +1,9 @@
-import React from "react"
 import styled from "styled-components"
 import styles from "./Footer.module.scss"
 
 import SocialMediaAnchor from "components/SocialMediaAnchor"
 import { socialMediaList } from "constants/constants"
+import ChangeVersionButton from "components/ChangeVersionButton"
 
 const SocialMediaAnchorList = styled.div`
   width: 100%;
@@ -20,6 +20,14 @@ const SocialMediaAnchorList = styled.div`
 const Footer = () => {
   return (
     <footer className={styles.footer}>
+      <div
+        className="mobile-only"
+        style={{ textAlign: "center", marginTop: 20 }}
+      >
+        <div style={{ display: "inline-block", maxWidth: 155, width: "100%" }}>
+          <ChangeVersionButton />
+        </div>
+      </div>
       <SocialMediaAnchorList className="mobile-only">
         {socialMediaList.map((item) => (
           <SocialMediaAnchor

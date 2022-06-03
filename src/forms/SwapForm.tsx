@@ -1,22 +1,26 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import styled from "styled-components"
 import Container from "components/Container"
 import { SubmitHandler, useForm, WatchObserver } from "react-hook-form"
 import Result from "./Result"
 import TabView from "components/TabView"
 import { useSearchParams } from "react-router-dom"
-import { UST, DEFAULT_MAX_SPREAD, ULUNA } from "constants/constants"
-import { useNetwork, useContract, useAddress, useConnectModal } from "hooks"
-import { lookup, decimal, toAmount } from "libs/parse"
+import { DEFAULT_MAX_SPREAD, LUNA, ULUNA } from "constants/constants"
+import { useNetwork, useAddress, useConnectModal } from "hooks"
+import {
+  lookup,
+  decimal,
+  toAmount,
+  findTokenInfoBySymbolOrContractAddr,
+} from "libs/parse"
 import calc from "helpers/calc"
-import { PriceKey, BalanceKey, AssetInfoKey } from "hooks/contractKeys"
+import { PriceKey, BalanceKey } from "hooks/contractKeys"
 import Count from "components/Count"
 import {
   validate as v,
   placeholder,
   step,
   renderBalance,
-  calcTax,
 } from "./formHelpers"
 import useSwapSelectToken from "./useSwapSelectToken"
 import SwapFormGroup from "./SwapFormGroup"
@@ -26,11 +30,10 @@ import { minus, gte, times, ceil, div } from "libs/math"
 import { TooltipIcon } from "components/Tooltip"
 import Tooltip from "lang/Tooltip.json"
 import useGasPrice from "rest/useGasPrice"
-import { hasTaxToken } from "helpers/token"
 import { Coins, CreateTxOptions } from "@terra-money/terra.js"
 import { Type } from "pages/Swap"
 import usePool from "rest/usePool"
-import { insertIf } from "libs/utils"
+import { insertIf, isNativeToken } from "libs/utils"
 import { percent } from "libs/num"
 import SvgArrow from "images/arrow.svg"
 import SvgPlus from "images/plus.svg"
@@ -38,15 +41,13 @@ import Button from "components/Button"
 import MESSAGE from "lang/MESSAGE.json"
 import SwapConfirm from "./SwapConfirm"
 import useAPI from "rest/useAPI"
-import { TxResult, useWallet } from "@terra-money/wallet-provider"
+import { TxResult, useLCDClient, useWallet } from "@terra-money/wallet-provider"
 import iconSettings from "images/icon-settings.svg"
 import iconReload from "images/icon-reload.svg"
 import { useModal } from "components/Modal"
 import Settings, { SettingValues } from "components/Settings"
 import useLocalStorage from "libs/useLocalStorage"
 import useAutoRouter from "rest/useAutoRouter"
-import { useLCDClient } from "layouts/WalletConnectProvider"
-import { useContractsAddress } from "hooks/useContractsAddress"
 import WarningModal from "components/Warning"
 import Disclaimer from "components/DisclaimerAgreement"
 
@@ -62,13 +63,10 @@ enum Key {
   max2 = "max2",
   maxFee = "maxFee",
   gasPrice = "gasPrice",
-  taxCap = "taxCap",
-  taxRate = "taxRate",
   poolLoading = "poolLoading",
 }
 
 const priceKey = PriceKey.PAIR
-const infoKey = AssetInfoKey.COMMISSION
 
 const Wrapper = styled.div`
   width: 100%;
@@ -93,13 +91,11 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
   const tokenInfos = useTokenInfos()
   const lpTokenInfos = useLpTokenInfos()
 
-  const { getSymbol, isNativeToken } = useContractsAddress()
-  const { loadTaxInfo, loadTaxRate, generateContractMessages } = useAPI()
+  const { generateContractMessages } = useAPI()
   const { fee } = useNetwork()
-  const { find } = useContract()
   const walletAddress = useAddress()
   const { post: terraExtensionPost } = useWallet()
-  const { terra } = useLCDClient()
+  const terra = useLCDClient()
   const settingsModal = useModal()
   const [slippageSettings, setSlippageSettings] =
     useLocalStorage<SettingValues>("slippage", {
@@ -129,7 +125,7 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
       [Key.value1]: "",
       [Key.value2]: "",
       [Key.feeValue]: "",
-      [Key.feeSymbol]: UST,
+      [Key.feeSymbol]: LUNA,
       [Key.load]: "",
       [Key.symbol1]: "",
       [Key.symbol2]: "",
@@ -281,20 +277,19 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
     if (isPairsLoading) {
       return {}
     }
-    const info1 =
-      type === Type.WITHDRAW ? lpTokenInfos.get(from)?.[0] : tokenInfo1
-    const info2 =
-      type === Type.WITHDRAW ? lpTokenInfos.get(from)?.[1] : tokenInfo2
-    const selected = pairs.find((item) => {
+    const lpTokenInfo = lpTokenInfos.get(from)
+
+    const info1 = type === Type.WITHDRAW ? lpTokenInfo?.[0] : tokenInfo1
+    const info2 = type === Type.WITHDRAW ? lpTokenInfo?.[1] : tokenInfo2
+    const selectedPairs = pairs.find((item) => {
       return (
         item.pair.find((s) => s.contract_addr === info1?.contract_addr) &&
         item.pair.find((s) => s.contract_addr === info2?.contract_addr)
       )
     })
 
-    const contract = selected?.contract || ""
-    const lpContract = selected?.liquidity_token || ""
-    const lpTokenInfo = lpTokenInfos.get(lpContract)
+    const contract = selectedPairs?.contract || ""
+    const lpContract = selectedPairs?.liquidity_token || ""
 
     return {
       pairAddress: contract,
@@ -320,8 +315,6 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
     type,
     balance1
   )
-
-  const [tax, setTax] = useState<Coins>(new Coins())
 
   const spread = useMemo(() => {
     return tokenInfo2 && !isAutoRouterLoading && poolResult?.estimated
@@ -367,12 +360,10 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
       ? calc.minimumReceived({
           expectedAmount: `${profitableQuery?.simulatedAmount}`,
           max_spread: String(slippageTolerance),
-          commission: find(infoKey, formData[Key.symbol2]),
+          commission: "0",
           decimals: tokenInfo1?.decimals,
         })
       : "0"
-
-    const taxs = tax.filter((coin) => !coin.amount.equals(0))
 
     return [
       ...insertIf(type === Type.SWAP, {
@@ -433,21 +424,6 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
           </Count>
         ),
       },
-      ...insertIf(taxs.toArray().length > 0, {
-        title: `Tax`,
-        content: taxs.toArray().map((coin, index) => {
-          return index === 0 ? (
-            <Count symbol={coin.denom}>{lookup(coin.amount.toString())}</Count>
-          ) : (
-            <div>
-              <span>, </span>
-              <Count symbol={coin.denom}>
-                {lookup(coin.amount.toString())}
-              </Count>
-            </div>
-          )
-        }),
-      }),
       ...insertIf(type === Type.SWAP && spread !== "", {
         title: <TooltipIcon content={Tooltip.Swap.Spread}>Spread</TooltipIcon>,
         content: (
@@ -488,9 +464,7 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
     type,
     profitableQuery,
     slippageTolerance,
-    find,
     tokenInfo1?.decimals,
-    tax,
     poolResult,
     lpContract,
     spread,
@@ -551,85 +525,10 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
       }
       return [msg]
     },
-    [isNativeToken]
+    []
   )
 
   const { gasPrice } = useGasPrice(formData[Key.feeSymbol])
-  const getTax = useCallback(
-    async ({
-      value1,
-      value2,
-      token1,
-      token2,
-    }: {
-      value1?: string
-      value2?: string
-      token1?: string
-      token2?: string
-    }) => {
-      let newTax = tax
-
-      newTax.map((coin) => {
-        if (
-          !(
-            coin.denom === token1 ||
-            (type === Type.PROVIDE && coin.denom === token2)
-          )
-        ) {
-          newTax.set(coin.denom, 0)
-        }
-
-        return true
-      })
-
-      const taxRate = await loadTaxRate()
-      if (token1 && hasTaxToken(token1) && taxRate && value1) {
-        const taxCap1 = await loadTaxInfo(token1)
-        if (taxCap1) {
-          const tax1 = calcTax(toAmount(value1), taxCap1, taxRate)
-          newTax.set(token1, tax1)
-        }
-      }
-      if (
-        type === Type.PROVIDE &&
-        token2 &&
-        hasTaxToken(token2) &&
-        taxRate &&
-        value2
-      ) {
-        const taxCap2 = await loadTaxInfo(token2)
-        if (taxCap2) {
-          const tax2 = calcTax(toAmount(value2), taxCap2, taxRate)
-          newTax.set(token2, tax2)
-        }
-      }
-      return newTax
-    },
-    [type, loadTaxInfo, loadTaxRate, tax]
-  )
-
-  const isTaxCalculating = useRef<boolean>(false)
-  useEffect(() => {
-    if (isTaxCalculating?.current) {
-      return
-    }
-    isTaxCalculating.current = true
-    getTax({
-      value1: formData[Key.value1],
-      value2: formData[Key.value2],
-      token1: from,
-      token2: to,
-    })
-      .then((value) => {
-        setTax(value)
-      })
-      .catch(() => {
-        setTax(tax)
-      })
-      .finally(() => {
-        isTaxCalculating.current = false
-      })
-  }, [formData, tax, getTax, from, to])
 
   const validateForm = async (
     key: Key.value1 | Key.value2 | Key.feeValue | Key.feeSymbol | Key.load,
@@ -648,8 +547,6 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
     } = { ...formData, ...(newValues || {}) }
 
     if (key === Key.value1) {
-      const taxCap = await loadTaxInfo(from)
-      const taxRate = await loadTaxRate()
       return (
         v.amount(value1, {
           symbol: symbol1,
@@ -660,11 +557,8 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
           feeValue,
           feeSymbol,
           maxFee,
-          taxCap,
-          taxRate,
           type,
           decimals: tokenInfo1?.decimals,
-          token: from,
         }) || true
       )
     }
@@ -686,7 +580,6 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
             maxFee: "0",
             type,
             decimals: tokenInfo2?.decimals,
-            token: to,
           }) || true
         )
       }
@@ -827,8 +720,8 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
   ])
   useEffect(() => {
     setValue(Key.gasPrice, gasPrice || "")
-    setValue(Key.feeValue, gasPrice ? ceil(times(fee.gas, gasPrice)) : "")
-  }, [fee.gas, gasPrice, setValue])
+    setValue(Key.feeValue, gasPrice ? ceil(times(fee?.gas, gasPrice)) : "")
+  }, [fee?.gas, gasPrice, setValue])
 
   useEffect(() => {
     setValue(Key.feeValue, ceil(times(fee?.gas, gasPrice)) || "")
@@ -862,21 +755,12 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
               ? calc.minimumReceived({
                   expectedAmount: `${profitableQuery?.simulatedAmount}`,
                   max_spread: String(slippageTolerance),
-                  commission: find(infoKey, formData[Key.symbol2]),
+                  commission: "0",
                   decimals: tokenInfo1?.decimals,
                 })
               : "0",
             token: from,
-            beliefPrice: `${decimal(
-              times(
-                div(value1, value2),
-                Math.pow(
-                  10,
-                  (tokenInfo1?.decimals || 0) - (tokenInfo2?.decimals || 0)
-                ) || 1
-              ),
-              18
-            )}`,
+            beliefPrice: `${decimal(div(value1, value2), 18)}`,
           })
         } else {
           msgs = await generateContractMessages(
@@ -906,13 +790,16 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
         let txOptions: CreateTxOptions = {
           msgs,
           memo: undefined,
-          gasPrices: `${gasPrice}${getSymbol(feeSymbol || "")}`,
+          gasPrices: `${gasPrice}${
+            findTokenInfoBySymbolOrContractAddr(feeSymbol)?.contract_addr
+          }`,
         }
 
         const signMsg = await terra.tx.create(
           [{ address: walletAddress }],
           txOptions
         )
+
         txOptions.fee = signMsg.auth_info.fee
 
         const extensionResult = await terraExtensionPost(txOptions)
@@ -929,7 +816,6 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
     [
       settingsModal,
       type,
-      getSymbol,
       terra,
       walletAddress,
       terraExtensionPost,
@@ -938,11 +824,8 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
       to,
       slippageTolerance,
       tokenInfo1,
-      tokenInfo2,
       getMsgs,
       profitableQuery,
-      find,
-      formData,
       lpContract,
     ]
   )
@@ -1073,20 +956,8 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
                         trigger(Key.value1)
                         return
                       }
-                      let taxVal = "0"
-                      const taxs = await getTax({
-                        token1: from,
-                        value1: lookup(formData[Key.max1], from),
-                      })
-
-                      taxs.map((tax) => {
-                        if (tax.denom === from) {
-                          taxVal = tax.toData().amount
-                          return false
-                        }
-                        return true
-                      })
-                      let maxBalance = minus(formData[Key.max1], taxVal)
+                      
+                      let maxBalance = formData[Key.max1]
                       // fee
                       if (formData[Key.symbol1] === formData[Key.feeSymbol]) {
                         if (gte(maxBalance, formData[Key.feeValue])) {
