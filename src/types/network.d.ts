@@ -17,7 +17,6 @@ interface NetworkConfig {
   swap: string
   /** Graphql server URL */
   mantle: string
-  stats: string
   /** LCDClientConfig */
   lcd: LCDClientConfig
   /** Fixed fee */
@@ -31,5 +30,4 @@ interface ExtNetworkConfig {
   name: string
   chainID: string
   lcd: string
-  fcd: string
 }

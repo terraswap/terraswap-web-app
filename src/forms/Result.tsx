@@ -73,7 +73,7 @@ const Result = ({ response, error, onFailure, parserKey }: ResultProps) => {
   }, [network, txInfo])
 
   const [status, setStatus] = useState<STATUS>(STATUS.LOADING)
-  const { fcd } = useNetwork()
+  const { lcd } = useNetwork()
 
   const retryCount = useRef(0)
 
@@ -92,7 +92,7 @@ const Result = ({ response, error, onFailure, parserKey }: ResultProps) => {
         return
       }
       try {
-        const { data: res } = await axios.get(`${fcd}/v1/tx/${txHash}`, {
+        const { data: res } = await axios.get(`${lcd}/v1/tx/${txHash}`, {
           cache: { ignoreCache: true },
         })
         if (isDestroyed) {
