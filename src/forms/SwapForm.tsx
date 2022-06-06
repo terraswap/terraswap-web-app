@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import styled from "styled-components"
 import Container from "components/Container"
 import { SubmitHandler, useForm, WatchObserver } from "react-hook-form"
@@ -16,12 +16,7 @@ import {
 import calc from "helpers/calc"
 import { PriceKey, BalanceKey } from "hooks/contractKeys"
 import Count from "components/Count"
-import {
-  validate as v,
-  placeholder,
-  step,
-  renderBalance,
-} from "./formHelpers"
+import { validate as v, placeholder, step, renderBalance } from "./formHelpers"
 import useSwapSelectToken from "./useSwapSelectToken"
 import SwapFormGroup from "./SwapFormGroup"
 import usePairs, { InitLP, useLpTokenInfos, useTokenInfos } from "rest/usePairs"
@@ -801,7 +796,10 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
         )
 
         txOptions.fee = signMsg.auth_info.fee
-        setValue(Key.feeValue, txOptions.fee.amount.get(feeAddress)?.amount.toString() || "")
+        setValue(
+          Key.feeValue,
+          txOptions.fee.amount.get(feeAddress)?.amount.toString() || ""
+        )
 
         const extensionResult = await terraExtensionPost(txOptions)
 
@@ -832,10 +830,14 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
   )
 
   const [result, setResult] = useState<TxResult | undefined>()
-
+  // hotfix: prevent modal closing when virtual keyboard is opened
+  const lastWindowWidth = useRef(window.innerWidth)
   useEffect(() => {
     const handleResize = () => {
-      settingsModal.close()
+      if (lastWindowWidth.current !== window.innerWidth) {
+        settingsModal.close()
+      }
+      lastWindowWidth.current = window.innerWidth
     }
     window.addEventListener("resize", handleResize)
     return () => {
@@ -957,7 +959,7 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
                         trigger(Key.value1)
                         return
                       }
-                      
+
                       let maxBalance = formData[Key.max1]
                       // fee
                       if (formData[Key.symbol1] === formData[Key.feeSymbol]) {
