@@ -3,10 +3,11 @@ import ConfirmDetails from "./ConfirmDetails"
 import TxHash from "./SwapTxHash"
 import { tokenInfos } from "../rest/usePairs"
 import { formatAsset } from "../libs/parse"
-import { SwapAttribute, SwapTxInfo } from "types/swapTx"
+import { SwapAttribute } from "types/swapTx"
+import { TxInfo as ITxInfo } from "@terra-money/terra.js"
 
 interface Props {
-  txInfo: SwapTxInfo
+  txInfo: ITxInfo
   parserKey: string
 }
 
