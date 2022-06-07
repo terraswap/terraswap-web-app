@@ -28,7 +28,6 @@ import {
   createLogMatcherForActions,
   getTxCanonicalMsgs,
 } from "@terra-money/log-finder-ruleset"
-import { SwapTxInfo as ISwapTxInfo } from "types/swapTx"
 import { TxInfo } from "@terra-money/terra.js"
 import { TxDescription } from "@terra-money/react-base-components"
 import { useLCDClient } from "@terra-money/wallet-provider"
@@ -61,7 +60,7 @@ const Result = ({ response, error, onFailure, parserKey }: ResultProps) => {
   const txHash = response?.result?.txhash ?? ""
   const raw_log = response?.result?.raw_log ?? ""
   /* polling */
-  const [txInfo, setTxInfo] = useState<ISwapTxInfo>()
+  const [txInfo, setTxInfo] = useState<TxInfo>()
 
   const matchedMsg = useMemo(() => {
     if (!txInfo || !network?.name) {
@@ -92,19 +91,22 @@ const Result = ({ response, error, onFailure, parserKey }: ResultProps) => {
         return
       }
       try {
-        const { data: res } = await axios.get(`${lcd}/v1/tx/${txHash}`, {
+        const { data: res } = await axios.get(`${lcd}/cosmos/tx/v1beta1/txs/${txHash}`, {
           cache: { ignoreCache: true },
         })
+        
         if (isDestroyed) {
           return
         }
-        if (res?.code) {
-          setTxInfo(res)
+        
+        if (res?.tx_response.code) {
+          setTxInfo(res.tx_response)
           setStatus(STATUS.FAILURE)
           return
         }
-        if (res?.txhash) {
-          setTxInfo(res)
+        
+        if (res?.tx_response.txhash) {
+          setTxInfo(res.tx_response)
           setStatus(STATUS.SUCCESS)
           return
         }
