@@ -301,6 +301,7 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
     to: to,
     amount: formData[Key.value1],
     type: formState.isSubmitted ? undefined : type,
+    slippageTolerance,
   })
 
   const { result: poolResult, poolLoading } = usePool(
@@ -781,6 +782,8 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
             return Array.isArray(msg) ? msg[0] : msg
           })
         }
+
+        console.log(msgs)
 
         let txOptions: CreateTxOptions = {
           msgs,
