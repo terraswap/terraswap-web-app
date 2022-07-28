@@ -144,7 +144,7 @@ const useAPI = () => {
     let lastPair: (NativeInfo | AssetInfo)[] | null = null
 
     try {
-      const url = `${service}/pairs`
+      const url = `${service}/pairs?unverified=true`
       const res: PairsResult = (await axios.get(url)).data
 
       if (res?.pairs?.length) {
