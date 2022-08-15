@@ -164,12 +164,7 @@ const SwapTokens = ({
               </VariableSizeList>
             ) : (
               <NoPairs>
-                <h1>:(</h1>
-                <div>
-                  No available pairs yet.
-                  <br />
-                  We are looking forward to getting the first providing!
-                </div>
+                <div>No result found</div>
               </NoPairs>
             )}
           </>
