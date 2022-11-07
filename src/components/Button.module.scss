@@ -58,7 +58,7 @@
   border-style: solid;
 
   @include hover {
-    opacity: 0.75;
+    background-color: rgba(2, 34, 186, 0.1);
   }
 
   @mixin button-outline-variant($color) {
