@@ -23,6 +23,8 @@ type Button = {
   isInstalled?: boolean
 }
 
+const denyWalletList = ["C2X Station Wallet"]
+
 const ConnectList = () => {
   const { availableConnections, availableInstallations, connect } = useWallet()
   const connectModal = useConnectModal()
@@ -36,6 +38,7 @@ const ConnectList = () => {
   const buttons: Button[] = [
     ...availableConnections
       .filter(({ type }) => type !== ConnectType.READONLY)
+      .filter(({ name }) => !denyWalletList.includes(name))
       .map(({ type, icon, name, identifier }) => ({
         label: name,
         image: <img src={icon} {...size} alt={name} />,
@@ -46,6 +49,7 @@ const ConnectList = () => {
       })),
     ...availableInstallations
       .filter(({ type }) => type !== ConnectType.READONLY)
+      .filter(({ name }) => !denyWalletList.includes(name))
       .map(({ icon, name, url }) => ({
         label: "Install " + name,
         image: <img src={icon} {...size} alt={name} />,
