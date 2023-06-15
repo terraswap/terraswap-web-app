@@ -29,6 +29,8 @@ export const MAX_MSG_LENGTH = 1024
 export const TX_POLLING_INTERVAL = 1000
 export const MAX_TX_POLLING_RETRY = 35
 
+export const DEFAULT_TX_DEADLINE = 20
+
 export const socialMediaList = [
   {
     icon: iconGitHub,

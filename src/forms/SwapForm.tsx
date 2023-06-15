@@ -5,7 +5,12 @@ import { SubmitHandler, useForm, WatchObserver } from "react-hook-form"
 import Result from "./Result"
 import TabView from "components/TabView"
 import { useSearchParams } from "react-router-dom"
-import { DEFAULT_MAX_SPREAD, LUNA, ULUNA } from "constants/constants"
+import {
+  DEFAULT_MAX_SPREAD,
+  DEFAULT_TX_DEADLINE,
+  LUNA,
+  ULUNA,
+} from "constants/constants"
 import { useNetwork, useAddress, useConnectModal } from "hooks"
 import {
   lookup,
@@ -92,21 +97,30 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
   const { post: terraExtensionPost } = useWallet()
   const terra = useLCDClient()
   const settingsModal = useModal()
-  const [slippageSettings, setSlippageSettings] =
-    useLocalStorage<SettingValues>("slippage", {
+  const [txSettings, setTxSettings] = useLocalStorage<SettingValues>(
+    "settings",
+    {
       slippage: `${DEFAULT_MAX_SPREAD}`,
       custom: "",
-    })
+      txDeadline: `${DEFAULT_TX_DEADLINE}`,
+    }
+  )
   const slippageTolerance = useMemo(() => {
     // 1% = 0.01
     return `${(
       parseFloat(
-        (slippageSettings?.slippage === "custom"
-          ? slippageSettings.custom
-          : slippageSettings.slippage) || `${DEFAULT_MAX_SPREAD}`
+        (txSettings?.slippage === "custom"
+          ? txSettings.custom
+          : txSettings.slippage) || `${DEFAULT_MAX_SPREAD}`
       ) / 100
     ).toFixed(3)}`
-  }, [slippageSettings])
+  }, [txSettings])
+
+  const txDeadlineMinute = useMemo(() => {
+    return Number(
+      txSettings.txDeadline ? txSettings.txDeadline : DEFAULT_TX_DEADLINE
+    )
+  }, [txSettings])
 
   const { pairs, isLoading: isPairsLoading } = usePairs()
   const balanceKey = {
@@ -302,6 +316,7 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
     amount: formData[Key.value1],
     type: formState.isSubmitted ? undefined : type,
     slippageTolerance,
+    deadline: Number(txDeadlineMinute),
   })
 
   const { result: poolResult, poolLoading } = usePool(
@@ -769,12 +784,14 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
                 from: `${from}`,
                 to: `${to}`,
                 slippage: slippageTolerance,
+                deadline: Number(txDeadlineMinute),
               },
               [Type.WITHDRAW]: {
                 type: Type.WITHDRAW,
                 sender: `${walletAddress}`,
                 amount: `${value1}`,
                 lpAddr: `${lpContract}`,
+                deadline: Number(txDeadlineMinute),
               },
             }[type] as any
           )
@@ -898,9 +915,9 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
               component: (
                 <Container sm>
                   <Settings
-                    values={slippageSettings}
+                    values={txSettings}
                     onChange={(settings) => {
-                      setSlippageSettings(settings)
+                      setTxSettings(settings)
                     }}
                   />
                 </Container>

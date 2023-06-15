@@ -1,4 +1,4 @@
-import { NATIVE_TOKENS } from "constants/constants"
+import { DEFAULT_TX_DEADLINE, NATIVE_TOKENS } from "constants/constants"
 import { is } from "ramda"
 import { tokenInfos } from "rest/usePairs"
 
@@ -36,4 +36,10 @@ export const isNativeToken = (key: string) =>
 
 export const getSymbol = (key: string) => {
   return tokenInfos.get(key)?.symbol
+}
+
+export const getDeadlineSeconds = (
+  interval: number | undefined = DEFAULT_TX_DEADLINE
+) => {
+  return Number(Number((Date.now() / 1000).toFixed(0)) + interval * 60)
 }
