@@ -262,6 +262,7 @@ const useAPI = () => {
             lpAddr: string
             amount: number | string
             sender: string
+            minAssets?: string
             deadline?: number
           }
     ) => {
