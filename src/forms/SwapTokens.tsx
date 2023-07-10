@@ -10,6 +10,7 @@ import { SwapTokenAsset } from "./useSwapSelectToken"
 import { VariableSizeList, ListChildComponentProps } from "react-window"
 import { isNativeToken } from "libs/utils"
 import styled from "styled-components"
+import { isMobile } from "@terra-money/wallet-controller/utils/browser-check"
 
 const cx = classNames.bind(styles)
 
@@ -141,7 +142,7 @@ const SwapTokens = ({
           name="search"
           onChange={(e) => setSearchKeyword(e.target.value)}
           autoComplete="off"
-          autoFocus
+          autoFocus={!isMobile()}
           placeholder="Search name or address"
         />
       </section>
