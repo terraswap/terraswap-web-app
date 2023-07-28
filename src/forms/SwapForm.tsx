@@ -30,7 +30,7 @@ import { minus, gte, times, ceil, div } from "libs/math"
 import { TooltipIcon } from "components/Tooltip"
 import Tooltip from "lang/Tooltip.json"
 import useGasPrice from "rest/useGasPrice"
-import { Coins, CreateTxOptions } from "@terra-money/terra.js"
+import { Coins, CreateTxOptions, Numeric } from "@terra-money/terra.js"
 import { Type } from "pages/Swap"
 import usePool from "rest/usePool"
 import { insertIf, isNativeToken } from "libs/utils"
@@ -791,6 +791,19 @@ const SwapForm = ({ type, tabs }: { type: Type; tabs: TabViewProps }) => {
                 sender: `${walletAddress}`,
                 amount: `${value1}`,
                 lpAddr: `${lpContract}`,
+                minAssets: poolResult?.estimated
+                  .split("-")
+                  .map(
+                    (val, idx) =>
+                      Numeric.parse(val)
+                        .mul(
+                          Numeric.parse(
+                            (1 - Number(slippageTolerance)).toString()
+                          )
+                        )
+                        .toFixed(0) + (idx ? poolContract2 : poolContract1)
+                  )
+                  .join(","),
                 deadline: Number(txDeadlineMinute),
               },
             }[type] as any
