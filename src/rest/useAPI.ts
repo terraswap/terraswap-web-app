@@ -6,6 +6,8 @@ import axios from "./request"
 import { Type } from "pages/Swap"
 import { Msg } from "@terra-money/terra.js"
 import { AxiosError } from "axios"
+import { getDeadlineSeconds } from "libs/utils"
+
 interface DenomBalanceResponse {
   pagination: { next_key: string | null; total: string }
   balances: DenomInfo[]
@@ -243,6 +245,7 @@ const useAPI = () => {
             max_spread: number | string
             belief_price: number | string
             sender: string
+            deadline?: number
           }
         | {
             type: Type.PROVIDE
@@ -252,17 +255,24 @@ const useAPI = () => {
             toAmount: number | string
             slippage: number | string
             sender: string
+            deadline?: number
           }
         | {
             type: Type.WITHDRAW
             lpAddr: string
             amount: number | string
             sender: string
+            deadline?: number
           }
     ) => {
+      if (query.deadline !== undefined) {
+        query.deadline = getDeadlineSeconds(query.deadline)
+      }
+
       const { type, ...params } = query
       const url = `${service}/tx/${type}`.toLowerCase()
       const res = (await axios.get(url, { params })).data
+
       return res.map((data: Msg.Amino | Msg.Amino[]) => {
         return (Array.isArray(data) ? data : [data]).map((item: Msg.Amino) => {
           const result = Msg.fromAmino(item)
