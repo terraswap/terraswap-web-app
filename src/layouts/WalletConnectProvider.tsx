@@ -1,12 +1,12 @@
 import {
   WalletProvider,
-  getChainOptions,
   WalletControllerChainOptions,
 } from "@terra-money/wallet-provider"
 import { PropsWithChildren, useEffect, useState } from "react"
 import { useModal } from "components/Modal"
 import ConnectListModal from "./ConnectListModal"
 import { ConnectModalProvider } from "hooks/useConnectModal"
+import { getChainOptions } from "libs/getChainOptions"
 
 const WalletConnectProvider: React.FC<PropsWithChildren<{}>> = ({
   children,
