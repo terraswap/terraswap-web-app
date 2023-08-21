@@ -41,7 +41,13 @@ const ConnectList = () => {
       .filter(({ name }) => !denyWalletList.includes(name))
       .map(({ type, icon, name, identifier }) => ({
         label: name,
-        image: <img src={icon} {...size} alt={name} />,
+        image: (
+          <img
+            src={icon.replace("assets.terra.money", "assets.terra.dev")}
+            {...size}
+            alt={name}
+          />
+        ),
         isInstalled: true,
         onClick: () => {
           handleConnectClick(type, identifier)
@@ -52,7 +58,13 @@ const ConnectList = () => {
       .filter(({ name }) => !denyWalletList.includes(name))
       .map(({ icon, name, url }) => ({
         label: "Install " + name,
-        image: <img src={icon} {...size} alt={name} />,
+        image: (
+          <img
+            src={icon.replace("assets.terra.money", "assets.terra.dev")}
+            {...size}
+            alt={name}
+          />
+        ),
         onClick: () => {
           supportModal.setInfo(url, name)
           supportModal.open()
