@@ -159,7 +159,9 @@ const Dashboard = () => {
 
   const topTrading = useMemo(() => {
     return pairs
-      ?.sort((a, b) => Number(b.volumeUst) - Number(a.volumeUst))
+      ?.sort(
+        (a, b) => Number(b.dailyVolumeUst || 0) - Number(a.dailyVolumeUst || 0)
+      )
       .slice(0, 5)
   }, [pairs])
 
@@ -177,10 +179,13 @@ const Dashboard = () => {
   const restTradingUst = useMemo(() => {
     return (
       pairs
-        ?.sort((a, b) => Number(b.volumeUst) - Number(a.volumeUst))
+        ?.sort(
+          (a, b) =>
+            Number(b.dailyVolumeUst || 0) - Number(a.dailyVolumeUst || 0)
+        )
         .slice(6)
         .reduce((prev, current) => {
-          return prev + Number(current.volumeUst)
+          return prev + Number(current.dailyVolumeUst || 0)
         }, 0) || 0
     )
   }, [pairs])
@@ -331,7 +336,7 @@ const Dashboard = () => {
                       token0Symbol,
                       token1,
                       token1Symbol,
-                      volumeUst,
+                      dailyVolumeUst,
                       pairAddress,
                     } = item
                     return (
@@ -355,7 +360,10 @@ const Dashboard = () => {
                         </div>
                         <div>
                           {token0Symbol}-{token1Symbol} /&nbsp;
-                          {formatMoney(Number(lookup(volumeUst, USDC)))} USDC
+                          {formatMoney(
+                            Number(lookup(dailyVolumeUst, USDC))
+                          )}{" "}
+                          USDC
                         </div>
                       </Link>
                     )
