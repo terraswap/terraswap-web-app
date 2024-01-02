@@ -28,13 +28,7 @@ export interface Pair {
   timestamp: Date
   pairAddress: string
   token0: string
-  token0Volume: string
-  token0Reserve: string
   token1: string
-  token1Volume: string
-  token1Reserve: string
-  totalLpTokenShare: string
-  volumeUst: string // Deprecated
   liquidityUst: string
   token0Symbol: string
   token0Decimals: number

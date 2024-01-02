@@ -322,7 +322,7 @@ const Dashboard = () => {
                   ]}
                   data={[
                     ...(topTrading || [])?.map((item) =>
-                      Number(item.volumeUst)
+                      Number(item.dailyVolumeUst)
                     ),
                     restTradingUst,
                   ]}
@@ -602,7 +602,7 @@ const Dashboard = () => {
                       ),
                     },
                     {
-                      accessor: "token0Volume",
+                      accessor: "pairAddress",
                       Header: "Fees (24H)",
                       sortDescFirst: true,
                       sortType: (a, b) =>
