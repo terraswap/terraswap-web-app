@@ -1,5 +1,7 @@
-import BN from "bignumber.js"
+import BN, { BigNumber } from "bignumber.js"
 import { isNil } from "ramda"
+
+BigNumber.config({ EXPONENTIAL_AT: 18 })
 
 export const plus = (a?: BN.Value, b?: BN.Value): string =>
   new BN(a || 0).plus(b || 0).toString()
@@ -28,7 +30,7 @@ export const ceil = (n: BN.Value): string =>
 export const floor = (n: BN.Value): string =>
   new BN(n).integerValue(BN.ROUND_FLOOR).toString()
 
-  export const halfUp = (n: BN.Value): string =>
+export const halfUp = (n: BN.Value): string =>
   new BN(n).integerValue(BN.ROUND_HALF_UP).toString()
 
 export const abs = (n: BN.Value): string => new BN(n).abs().toString()
