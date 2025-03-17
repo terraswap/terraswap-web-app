@@ -9,6 +9,7 @@ import iconClose from "images/icon-close-primary.svg"
 import { socialMediaList } from "constants/constants"
 import SocialMediaAnchor from "components/SocialMediaAnchor"
 import ChangeVersionButton from "components/ChangeVersionButton"
+import Tooltip from "components/Tooltip"
 
 const Wrapper = styled.div<{ isOpen: boolean }>`
   width: 100%;
@@ -171,13 +172,17 @@ const Sidebar = () => {
       />
       <Wrapper isOpen={isOpen}>
         <div>
-          <NavLink
-            to="/"
-            className={location.pathname?.includes("/pairs") ? "active" : ""}
-            onClick={() => close()}
-          >
-            Dashboard
-          </NavLink>
+          <Tooltip content="Coming soon">
+            <NavLink
+              to="/"
+              className={location.pathname?.includes("/pairs") ? "active" : ""}
+              onClick={() => close()}
+              aria-disabled
+              style={{ pointerEvents: "none", opacity: 0.5 }}
+            >
+              Dashboard
+            </NavLink>
+          </Tooltip>
           <NavLink to="/swap" onClick={() => close()}>
             Swap
           </NavLink>
